@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>لوحة مفاتيح عربية + بحث Google & YouTube</title>
+  <style>
+    :root{--bg:#f4f6fb;--card:#ffffff;--accent:#0b74de;--muted:#555;--key:#f9f9fc;--key-border:#ddd}
+    *{box-sizing:border-box;font-family: 'Segoe UI', Tahoma, Verdana, sans-serif}
+    body{background:var(--bg);margin:0;padding:20px;display:flex;align-items:flex-start;justify-content:center;min-height:100vh}
+    .container{width:100%;max-width:960px}
+    header{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+    h1{margin:0;font-size:22px;color:#222}
+    p.lead{margin:0;color:var(--muted);font-size:14px}
+    .card{background:var(--card);border-radius:14px;padding:20px;box-shadow:0 6px 20px rgba(15,15,30,0.08)}
+
+    .input-area{display:flex;gap:12px;flex-wrap:wrap}
+    textarea#input{flex:1;min-height:140px;padding:12px;border-radius:8px;border:1px solid #e0e0ea;font-size:18px;resize:vertical;line-height:1.5}
+    .controls{display:flex;flex-direction:column;gap:8px;width:220px}
+    .btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 12px;border-radius:8px;border:none;cursor:pointer;transition:.2s}
+    .btn-primary{background:var(--accent);color:#fff}
+    .btn-primary:hover{background:#095bb0}
+    .btn-ghost{background:#fff;border:1px solid #ccc;color:#333}
+    .btn-ghost:hover{background:#f1f1f1}
+    .btn-wide{width:100%}
+    .small{padding:8px 10px;font-size:14px}
+
+    .keyboard{margin-top:18px;display:grid;gap:8px}
+    .row{display:flex;gap:8px;justify-content:center}
+    .key{background:var(--key);padding:12px 14px;border-radius:8px;cursor:pointer;user-select:none;border:1px solid var(--key-border);font-size:18px;min-width:40px;text-align:center;transition:.15s}
+    .key:hover{background:#eef6ff}
+    .key.wide{flex:1}
+
+    .footer{margin-top:16px;color:var(--muted);font-size:13px;text-align:center}
+
+    @media(max-width:720px){
+      .controls{width:100%;flex-direction:row;flex-wrap:wrap}
+      textarea#input{min-height:120px}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>لوحة مفاتيح عربية مع بحث Google وYouTube</h1>
+        <p class="lead">اكتب بالعربية مباشرة ثم ابحث أو انسخ النص بسهولة.</p>
+      </div>
+    </header>
+
+    <div class="card">
+      <div class="input-area">
+        <textarea id="input" placeholder="اكتب هنا..." aria-label="حقل النص"></textarea>
+
+        <div class="controls">
+          <button class="btn btn-primary btn-wide" id="searchGoogle">ابحث في Google</button>
+          <button class="btn btn-ghost btn-wide" id="searchYouTube">ابحث في YouTube</button>
+          <button class="btn small btn-ghost" id="copyBtn">نسخ النص</button>
+          <button class="btn small btn-ghost" id="clearBtn">مسح</button>
+          <label style="font-size:13px;color:var(--muted);margin-top:6px">حجم الحروف:</label>
+          <input type="range" id="fontRange" min="14" max="28" value="18">
+        </div>
+      </div>
+
+      <div class="keyboard" id="keyboard" aria-hidden="false"></div>
+
+      <div class="footer">موقع بسيط لكتابة النصوص بالعربية مع أزرار للبحث والنسخ. يدعم الهواتف وأجهزة الكمبيوتر.</div>
+    </div>
+  </div>
+
+  <script>
+    // Arabic keyboard layout + numbers + punctuation
+    const layout = [
+      ['1','2','3','4','5','6','7','8','9','0'],
+      ['ض','ص','ث','ق','ف','غ','ع','ه','خ','ح','ج','د'],
+      ['ش','س','ي','ب','ل','ا','ت','ن','م','ك','ط'],
+      ['ئ','ء','ؤ','ر','لا','ى','ة','و','ز','ظ'],
+      ['،','؛','؟','.',',','!','-','_','/','@'],
+      ['←','مسافة']
+    ];
+
+    const keyboard = document.getElementById('keyboard');
+    const input = document.getElementById('input');
+
+    function buildKeyboard(){
+      layout.forEach(row=>{
+        const r = document.createElement('div'); r.className='row';
+        row.forEach(key=>{
+          const k = document.createElement('div');
+          k.className='key';
+          if(key==='مسافة'){k.classList.add('wide');}
+          if(key==='←'){k.classList.add('wide');}
+          k.textContent=key;
+          k.setAttribute('role','button');
+          k.tabIndex=0;
+          k.addEventListener('click',()=> onKeyPress(key));
+          k.addEventListener('keydown',(e)=>{ if(e.key==='Enter' || e.key===' ') onKeyPress(key); });
+          r.appendChild(k);
+        });
+        keyboard.appendChild(r);
+      });
+    }
+
+    function onKeyPress(key){
+      if(key==='مسافة') input.value += ' ';
+      else if(key==='←') input.value = input.value.slice(0,-1);
+      else input.value += key;
+      input.focus();
+    }
+
+    buildKeyboard();
+
+    // Controls
+    document.getElementById('clearBtn').addEventListener('click',()=>{input.value=''; input.focus();});
+    document.getElementById('copyBtn').addEventListener('click',()=>{
+      navigator.clipboard.writeText(input.value).then(()=>{
+        alert('تم نسخ النص إلى الحافظة');
+      }).catch(()=>{alert('تعذر نسخ النص');});
+    });
+
+    document.getElementById('searchGoogle').addEventListener('click',()=>{
+      const q = encodeURIComponent(input.value.trim());
+      if(!q){alert('المرجو إدخال نص للبحث'); return}
+      window.open('https://www.google.com/search?q='+q,'_blank');
+    });
+
+    document.getElementById('searchYouTube').addEventListener('click',()=>{
+      const q = encodeURIComponent(input.value.trim());
+      if(!q){alert('المرجو إدخال نص للبحث'); return}
+      window.open('https://www.youtube.com/results?search_query='+q,'_blank');
+    });
+
+    // Font size control
+    const fontRange = document.getElementById('fontRange');
+    fontRange.addEventListener('input',()=>{ input.style.fontSize = fontRange.value+'px'; });
+
+    input.addEventListener('input',()=>{ input.dir='rtl'; });
+  </script>
+</body>
+</html>
